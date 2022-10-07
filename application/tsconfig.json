@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@test/*": ["../test/*"]
+    },
+    "declaration": true,
+    "declarationMap": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "incremental": false,
+    "lib": ["ESNext", "DOM"],
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "strict": true,
+    "target": "ES2021",
+    "typeRoots": ["node_modules/@types", "types"]
+  },
+  "include": ["src", "test"],
+  "ts-node": {
+    "swc": true
+  }
+}
