@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    container:
+      image: node:16
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: node-modules
+        with:
+          path: application/node_modules/
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Install NPM dependencies
+        run: |
+          if [ ! -d application/node_modules ]; then
+            cd application
+            npm ci
+          fi
+          npx patch-package
+      - name: Lint
+        run: |
+          cd application
+          npm run lint
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          shopt -s dotglob
+          rm -rf *
+  test:
+    container:
+      image: node:16
+      env:
+        PORT: 3000
+        HOST: 0.0.0.0
+        DATABASE_URL: postgresql://contrary@postgres:5432/contrary?sslmode=disable
+        DATABASE_POOL_MIN: 1
+        DATABASE_POOL_MAX: 5
+    services:
+      postgres:
+        env:
+          POSTGRES_USER: contrary
+          POSTGRES_HOST_AUTH_METHOD: trust
+        image: postgres:14-alpine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: node-modules
+        with:
+          path: application/node_modules/
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Install Dependencies
+        run: |
+          if [ ! -d application/node_modules ]; then
+            cd application
+            npm ci
+          fi
+          npx patch-package
+      - name: Test
+        run: |
+          cd application
+          npm run test:cov
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          shopt -s dotglob
+          rm -rf *
