@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: contrary_proxy
+    profiles:
+      - service
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: contrary_database
+    profiles:
+      - service
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: contrary
+      POSTGRES_HOST_AUTH_METHOD: trust
+      VIRTUAL_HOST: postgres.localtest.me:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    depends_on:
+      - nginx-proxy
+
+  ingestion:
+    build:
+      context: docker/python
+    container_name: contrary_ingestion
+    profiles:
+      - ingestion
+    command: python /app/scripts/import.py
+    volumes:
+      - ./ingestion:/app
+    working_dir: /app
+    environment:
+      DB_USER: contrary
+      DB_HOST: postgres
+
+  application:
+    build:
+      context: docker/node
+      args:
+        UID: $HOST_UID
+        GID: $HOST_GID
+    container_name: contrary_application
+    profiles:
+      - application
+    command: npm run start:dev
+    environment:
+      VIRTUAL_PORT: 3000
+      VIRTUAL_HOST: application.localtest.me
+      NODE_ENV: development
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://contrary@postgres:5432/contrary?sslmode=disable
+      DATABASE_POOL_MIN: 1
+      DATABASE_POOL_MAX: 5
+    working_dir: /home/node/app
+    volumes:
+      - ./application:/home/node/app
+      - ./ingestion:/home/node/ingestion
+
+volumes:
+  postgres:

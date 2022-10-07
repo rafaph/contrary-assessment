@@ -1,0 +1,9 @@
+#!/bin/bash
+
+baseDir=$(dirname "$0")
+projectDir="$baseDir/.."
+container="contrary_database"
+
+# copy the script and run create tables
+docker cp "$projectDir/ingestion/scripts/create-tables.sql" $container:/tmp
+docker exec $container psql -U contrary -f /tmp/create-tables.sql

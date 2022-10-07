@@ -1,0 +1,10 @@
+#!/bin/bash
+
+baseDir=$(dirname "$0")
+dataDir="$baseDir/../ingestion/data"
+
+curl \
+https://contrary-engineering-interview.s3.amazonaws.com/data/people.csv \
+https://contrary-engineering-interview.s3.amazonaws.com/data/companies.csv \
+-o "$dataDir/people.csv" \
+-o "$dataDir/companies.csv"
